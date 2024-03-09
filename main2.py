@@ -71,7 +71,7 @@ def KtoF(Kelvin):
 
 #Weather API
 base_url="https://api.openweathermap.org/data/2.5/weather?"
-api_key = "38fc658cdcc4cc6139caf2649ccc7bbb"
+api_key = ""
 city= "Berlin"
 complete_url=base_url+"appid="+api_key+"&q="+city
 response = requests.get(complete_url).json()
@@ -81,7 +81,7 @@ response = requests.get(complete_url).json()
 #lat = response['coord']['lat']
 #Forecast api
 exclude = "minute,hourly"
-api_key = "38fc658cdcc4cc6139caf2649ccc7bbb"
+api_key = ""
 forecast_url =  f"http://api.openweathermap.org/data/2.5/forecast?q={city}&appid={api_key}&units=imperial"
 f_response = requests.get(forecast_url).json()
 
