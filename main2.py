@@ -4,7 +4,7 @@ from time import strftime
 import requests
 from datetime import datetime,timedelta
 import pytz
-
+from newsapi import NewsApiClient
 
 root = Tk()
 
@@ -52,6 +52,7 @@ weather_images = {
     "broken clouds": "cloudy_light.png",
     "shower rain": "change-rainlight.png",
     "light rain" : "change-rainlight.png",
+    "moderate rain" : "night-rain_light.png",
     "rain": "night-rain_light.png",
     "thunderstorm": "thunder-storms_light.png",
     "snow": "flurries_light.png",
@@ -71,8 +72,8 @@ def KtoF(Kelvin):
 
 #Weather API
 base_url="https://api.openweathermap.org/data/2.5/weather?"
-api_key = ""
-city= "Berlin"
+api_key = "38fc658cdcc4cc6139caf2649ccc7bbb"
+city= "Mankato"
 complete_url=base_url+"appid="+api_key+"&q="+city
 response = requests.get(complete_url).json()
 #print(complete_url)
@@ -81,7 +82,7 @@ response = requests.get(complete_url).json()
 #lat = response['coord']['lat']
 #Forecast api
 exclude = "minute,hourly"
-api_key = ""
+api_key = "38fc658cdcc4cc6139caf2649ccc7bbb"
 forecast_url =  f"http://api.openweathermap.org/data/2.5/forecast?q={city}&appid={api_key}&units=imperial"
 f_response = requests.get(forecast_url).json()
 
@@ -142,14 +143,14 @@ def Weather():
    image_label = Label(frame1, image = bg_image)
    #image_label.place(x=0,y=0,relwidth=1,relheight=1)
 
+   city_lbl = Label(frame1, text = city , fg = 'white', bg = bg_color,font = city_font)
+   city_lbl.grid(column = 0 , row = 0, columnspan=3)
+
    temp_lbl = Label(frame1, text = str(tempF) + " °F", fg = 'white', bg = bg_color,font = temp_font, justify= LEFT)
    temp_lbl.grid(column = 1 , row = 1, columnspan= 2)
 
    condition_lbl = Label(frame1, text = condition  , fg = 'white', bg = bg_color,font = condition_font, justify = LEFT)
    condition_lbl.grid(column = 1 , row = 2)
-
-   city_lbl = Label(frame1, text = city , fg = 'white', bg = bg_color,font = city_font)
-   city_lbl.grid(column = 0 , row = 0, columnspan=2)
 
    temp_max_lbl = Label(frame1, text = "H: " + str(temp_max_F) + " °F\n" + "L: " + str(temp_min_F) + " °F" , fg = 'white', bg = bg_color,font = temp_max_font)
    temp_max_lbl.grid(column = 0 , row = 2)
@@ -183,7 +184,6 @@ def Weather():
                 break
    display_weather_forecast(f_response)
 
-
 Weather()
 
 
@@ -195,9 +195,8 @@ condition_lbl = Label(frame1, image = condition_image, bg = bg_color )
 condition_lbl.grid(column = 0 , row = 1)
 
 #Calendar
-
 Calendarframe = LabelFrame(root,padx = 10, pady = 10, bg = 'black', border=0, width =200, height = 400)
-Calendarframe.place(x=800,y=400)
+Calendarframe.place(x=900,y=400)
 today = datetime.today()
 
 def Cal():
@@ -216,54 +215,60 @@ Cal()
 
 #News
 
-type = 'sports'
-api_Key = '651d6cfbee234d5abf3802bdba9eba82'
-api_key = "0dcc3ef4f630463699f2f87b79983d75"
-BASE_URL = f"https://newsapi.org/v2/top-headlines/"
-params = {
-    "sources": "cnn",  # Replace with your desired news source
-    "apiKey": api_key,
-}
-
-# Making the request to the News API
-response = requests.get(BASE_URL, params=params)
-
-Newsframe = LabelFrame(root, padx = 10, pady = 10, bg = 'black', width= 200,height=100)
-Newsframe.place(x=60,y=300)
-
 def News():
-    
-    news_type = Label(Newsframe, text = type, bg = 'black', fg = 'white')
-    news_type.pack()
 
-    news = Label(Newsframe, text = "Headlines", bg = 'black', fg = 'white', justify = LEFT)
-    news.pack()
-    
-    
-    # Getting the response object
-    if response.status_code == 200:
-    # The 'response' object now contains information about the top headlines
-        news_data = response.json()
+    Newsframe = LabelFrame(root, padx = 10, pady = 10, bg = 'black', width= 200,height=100,borderwidth=0)
+    Newsframe.place(x=60,y=380)
 
-    # Extracting descriptions and source names
-        articles = news_data.get("articles", [])
-        
-        for article in articles[:3]:
-            description = article.get("description")
-            source_name = article.get("source", {}).get("name")
-            published_at = article.get("publishedAt")
-            
+    headline_font = ("SEOGE UI",22)
+    news = Label(Newsframe, text = "Your morning News!", bg = 'black', fg = 'white', justify = LEFT,font = headline_font)
+    news.grid(row = 0, column =0,sticky='w')
 
-            F1 = Label(Newsframe, text= source_name+ ": " + description, font=("helvetica", 8, "bold"), bg='black', fg='white',wraplength=400, justify=LEFT,anchor= E)
-            F1.pack()
-
-            #print(f"Description: {description}")
-            #print(f"Source Name: {source_name}")
-            #print(f"Published At: {published_at}")
-            #print("------")
-    else:
-        print(f"Error: {response.status_code} - {response.text}")
+    image = Image.open('search.png').resize((30, 30))
+    # Convert the image to a format compatible with ImageTk
+    search_image = ImageTk.PhotoImage(image)
+    # Create a label widget to display the image
+    search = Label(Newsframe, image=search_image,bg='black')
+    search.grid(row=1, column=0,sticky='w')
+    # Keep a reference to the PhotoImage object
+    search.image = search_image
     
+    def news_update():
+        #api_key = "0dcc3ef4f630463699f2f87b79983d75"
+        api_key = '651d6cfbee234d5abf3802bdba9eba82'
+        newsapi = NewsApiClient(api_key)
+        params = {
+            'q': '',
+            'language': 'en',
+            'sort_by': 'relevancy',
+            'sources' : 'CNN'
+        }
+        news_response = newsapi.get_everything(**params)
+
+        keyword_font = ('Helvetica',15)
+
+        if 'q' not in params or params['q'] == '':
+            keyword = Label(Newsframe, text="Everything", bg='black', fg='white', justify=LEFT, font=keyword_font)
+            keyword.place(x=search.winfo_reqwidth() + 10, y=search.winfo_reqheight()+4)
+        else:
+            keyword = Label(Newsframe, text=params.get('q'), bg='black', fg='white', justify=LEFT, font=keyword_font)
+            keyword.place(x=search.winfo_reqwidth() + 10, y=search.winfo_reqheight()+4)
+
+        # Getting the response object
+        if news_response['status'] == 'ok':
+            i = 0
+            for article in news_response['articles'][:7]:
+                description = article['title']
+                source_name = article['source']['name']
+                F1 = Label(Newsframe, text=source_name + ": " + description, font=("helvetica", 12, "bold"), bg='black',
+                       fg='white', wraplength=800)
+                F1.grid(row=i + 3, column=0, sticky="w")
+                i += 1
+        else:
+            print(f"Error: {news_response['status']}")
+        root.after(600, news_update)
+
+    news_update()
 News()
 
 
