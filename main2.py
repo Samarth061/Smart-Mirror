@@ -266,7 +266,7 @@ def News():
                 i += 1
         else:
             print(f"Error: {news_response['status']}")
-        root.after(600, news_update)
+        root.after(600000, news_update)
 
     news_update()
 News()
