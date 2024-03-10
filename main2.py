@@ -266,7 +266,7 @@ def News():
                 i += 1
         else:
             print(f"Error: {news_response['status']}")
-        root.after(600000, news_update)
+        root.after(900000, news_update)#100 requests per day/max rounding off to 900000 instead of 864000 to update it througout the day
 
     news_update()
 News()
