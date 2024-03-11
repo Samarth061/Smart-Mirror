@@ -24,18 +24,22 @@ my_button = Button(root, text="Quit" , command = root.destroy)
 my_button.place(x=620, y=10)
 
 #Date and time
-def time():
-    current_date = datetime.now()
-    time_now = strftime('%I:%M %p\n' )
-    day_date = strftime('%a\n' + '%Y-%m-%d')
-    lbl.config(text=time_now)
-    lbl2.config(text=day_date)
-    lbl.after(1000, time)
+class time():
+    def __init__(self):
+        self.lbl = Label(root, font=('Roboto', 40, 'bold'), bg='black', fg='white')
+        self.lbl.place(x=1000, y=40)
+        self.lbl2 = Label(root, font=('Open Sans', 20), bg='black', fg='white', justify=RIGHT)
+        self.lbl2.place(x=1090, y=110)
+        self.time_display()
 
-lbl = Label(root, font=('Helvetica', 40, 'bold'), bg='black', fg='white')
-lbl.place(x = 1000, y = 40)
-lbl2 = Label(root, font=('Helvetica', 20), bg='black', fg='white', justify=RIGHT )
-lbl2.place(x = 1090, y = 110)
+    def time_display(self):
+        self.current_date = datetime.now()
+        time_now = strftime('%I:%M %p\n')
+        day_date = strftime('%a\n' + '%Y-%m-%d')
+        self.lbl.config(text=time_now)
+        self.lbl2.config(text=day_date)
+        self.lbl.after(1000, self.time_display)
+
 time()
 
 #Weather
@@ -215,60 +219,88 @@ Cal()
 
 #News
 
-def News():
-
-    Newsframe = LabelFrame(root, padx = 10, pady = 10, bg = 'black', width= 200,height=100,borderwidth=0)
-    Newsframe.place(x=60,y=380)
-
-    headline_font = ("SEOGE UI",22)
-    news = Label(Newsframe, text = "Your morning News!", bg = 'black', fg = 'white', justify = LEFT,font = headline_font)
-    news.grid(row = 0, column =0,sticky='w')
-
-    image = Image.open('search.png').resize((30, 30))
-    # Convert the image to a format compatible with ImageTk
-    search_image = ImageTk.PhotoImage(image)
-    # Create a label widget to display the image
-    search = Label(Newsframe, image=search_image,bg='black')
-    search.grid(row=1, column=0,sticky='w')
-    # Keep a reference to the PhotoImage object
-    search.image = search_image
-    
-    def news_update():
+class News(LabelFrame):
+    #This superclass is a constructor for the News Frame
+    def __init__(self,*args,**kwargs):
+        super().__init__(*args, **kwargs)
         #api_key = "0dcc3ef4f630463699f2f87b79983d75"
-        api_key = '651d6cfbee234d5abf3802bdba9eba82'
-        newsapi = NewsApiClient(api_key)
-        params = {
-            'q': '',
+        self.api_key = '651d6cfbee234d5abf3802bdba9eba82'
+        self.newsapi = NewsApiClient(self.api_key)
+        self.params = {
+            'q': 'everything',
             'language': 'en',
-            'sort_by': 'relevancy',
-            'sources' : 'CNN'
+            'sources' : 'CNN',
+            #'country' : 'us'
         }
-        news_response = newsapi.get_everything(**params)
+        self.news_articles = []
+        self.current_index = 0
+        self.batch_size = 4
+        self.F1 = Label()
+
+        self.Newsframe = LabelFrame(root, padx = 10, pady = 10, bg = 'black', width= 200,height=100,borderwidth=0)
+        self.Newsframe.place(x=60,y=440)
+
+        self.headline_font = ("SEOGE UI",22)
+        self.news = Label(self.Newsframe, text = "Your morning News!", bg = 'black', fg = 'white', justify = LEFT,font = self.headline_font)
+        self.news.grid(row = 0, column =0,sticky='w')
+
+        self.image = Image.open('search.png').resize((30, 30))
+        self.search_image = ImageTk.PhotoImage(self.image)
+        # Create a label widget to display the image
+        self.search = Label(self.Newsframe, image=self.search_image,bg='black')
+        self.search.grid(row=1, column=0,sticky='w')
+        # Keep a reference to the PhotoImage object
+        self.search.image = self.search_image
 
         keyword_font = ('Helvetica',15)
-
-        if 'q' not in params or params['q'] == '':
-            keyword = Label(Newsframe, text="Everything", bg='black', fg='white', justify=LEFT, font=keyword_font)
-            keyword.place(x=search.winfo_reqwidth() + 10, y=search.winfo_reqheight()+4)
+        if 'q' not in self.params or self.params['q'] == '':
+            self.keyword = Label(self.Newsframe, text="Everything", bg='black', fg='white', justify=LEFT, font=keyword_font)
+            self.keyword.place(x=self.search.winfo_reqwidth() + 10, y=self.search.winfo_reqheight()+4)
         else:
-            keyword = Label(Newsframe, text=params.get('q'), bg='black', fg='white', justify=LEFT, font=keyword_font)
-            keyword.place(x=search.winfo_reqwidth() + 10, y=search.winfo_reqheight()+4)
+            self.keyword = Label(self.Newsframe, text=self.params.get('q'), bg='black', fg='white', justify=LEFT, font=keyword_font)
+            self.keyword.place(x=self.search.winfo_reqwidth() + 10, y=self.search.winfo_reqheight()+4)
+        
+        self.fetch_news()
 
-        # Getting the response object
+    #This functions fetches the first set of news and new ones every 10 minutes
+    def fetch_news(self):
+        news_response = self.newsapi.get_everything(**self.params)
         if news_response['status'] == 'ok':
-            i = 0
-            for article in news_response['articles'][:7]:
-                description = article['title']
-                source_name = article['source']['name']
-                F1 = Label(Newsframe, text=source_name + ": " + description, font=("helvetica", 12, "bold"), bg='black',
-                       fg='white', wraplength=800)
-                F1.grid(row=i + 3, column=0, sticky="w")
-                i += 1
+            self.news_articles = news_response['articles']
+            self.show_news()
+            # Schedule next fetch after 10 minutes (600 seconds)
+            self.after(864000, self.fetch_news)  # 600,000 milliseconds = 10 minutes
         else:
-            print(f"Error: {news_response['status']}")
-        root.after(900000, news_update)#100 requests per day/max rounding off to 900000 instead of 864000 to update it througout the day
 
-    news_update()
+            self.F1 = Label(self.Newsframe, text= str(news_response['code']), font=("helvetica", 12, "bold"), bg='black',
+                         fg='white', wraplength=800)
+            # Schedule next fetch after 1 minute (60 seconds)
+            self.after(60000, self.fetch_news)  # 60,000 milliseconds = 1 minute
+
+    #This function shows the actual news on the frame
+    def show_news(self):
+        news = ""
+        starting_row =3
+        
+        for article in self.news_articles[self.current_index:self.current_index + self.batch_size]:
+            description = article['title']
+            source_name = article['source']['name']
+            news = source_name + ": " + description
+            #self here might be an error check it first
+            self.F1 = Label(self.Newsframe, text= news, font=("helvetica", 12, "bold"), bg='black',
+                         fg='white', wraplength=800)
+            self.F1.grid(row=starting_row, column=0, sticky="w")    
+            starting_row+=1
+            self.after(5000,self.F1.destroy)
+        self.after(5000, self.show_next_news)
+    
+    #This funciton fetches new batch of news
+    def show_next_news(self):
+        # Show the next batch of news articles
+        self.current_index += self.batch_size
+        if self.current_index >= len(self.news_articles):
+            self.current_index = 0
+        self.show_news()
 News()
 
 
