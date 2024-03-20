@@ -2,11 +2,11 @@ from tkinter import *
 from PIL import Image, ImageTk
 from time import strftime
 import requests
-from datetime import datetime,timedelta
-from tkcalendar import Calendar
-import pytz
-import textwrap
-
+from datetime import datetime 
+from newsapi import NewsApiClient
+import psycopg2
+import time
+import datetime as dt
 
 root = Tk()
 
@@ -18,213 +18,354 @@ height = root.winfo_screenheight()
 root.state('zoomed')
 root.title("Smart Mirror")
 root.overrideredirect(True)
-root.configure(background='black')
+root.configure(background='black')#2E2E2E
 root.iconbitmap("C:/Users/samar/Downloads/IMG_0249.ico")
 
 #Quit Button
 my_button = Button(root, text="Quit" , command = root.destroy)
-my_button.place(x=1000, y=600)
+my_button.place(x=620, y=10)
 
-#Time
-def time():
-    time_now = strftime('%a, %I:%M %p')
-    lbl.config(text=time_now)
-    lbl.after(1000, time)
+#Database
+while True:
+        try:
+            conn = psycopg2.connect(
+                dbname="railway",
+                user="postgres",
+                password="b*14GGE23cbcegDcAEDa3d*cd6AC-5*-",
+                host="viaduct.proxy.rlwy.net",
+                port="15394",
+            )
+            cursor = conn.cursor()
+            print("Database connection was successfull!")
+            break
+        except Exception as error:
+            print("Connecting to database failed.")
+            print("Error: ", error)
+            time.sleep(2)  # let it keeps trying when failed
 
-lbl = Label(root, font=('calibri', 40, 'bold'), bg='black', fg='white')
-lbl.place(x = 900, y = 40)
-time()
+#Date and time
+class Time():
+    def __init__(self):
+        self.lbl = Label(root, font=('Roboto', 40, 'bold'), bg='black', fg='white')
+        self.lbl.place(x=1640, y=30)
+        self.lbl2 = Label(root, font=('Open Sans', 20), bg='black', fg='white', justify=RIGHT)
+        self.lbl2.place(x=1730, y=100)
+        self.time_display()
+
+    def time_display(self):
+        self.current_date = datetime.now()
+        time_now = strftime('%I:%M %p\n')
+        day_date = strftime('%a\n' + '%Y-%m-%d')
+        self.lbl.config(text=time_now)
+        self.lbl2.config(text=day_date)
+        self.lbl.after(1000, self.time_display)
 
 #Weather
-def KtoC(Kelvin):
-    Celsius = Kelvin - 273.15
-    return Celsius
-def KtoF(Kelvin):
-    Farheneit = (Kelvin - 273.15)*9/5 + 32
-    return Farheneit
-
-base_url="https://api.openweathermap.org/data/2.5/weather?"
-api_key = "3b23acced78f1a72b17d88d0bb41bc20"
-city= "Mankato"
-complete_url=base_url+"appid="+api_key+"&q="+city
-response = requests.get(complete_url).json()
-
-frame1 = LabelFrame(root,padx = 10, pady = 10, bg = 'black', borderwidth=0)
-frame1.place(x=100,y=100)
-
-#Converting sunrise time to Mankato from London time
-sunrise_london = str(datetime.utcfromtimestamp(response['sys']['sunrise']))
-sunrise_london_datetime = datetime.fromisoformat(sunrise_london)
-sunrise_london_datetime_utc = sunrise_london_datetime.astimezone(pytz.utc)
-time_diff = 6
-sunrise_manakto_datetime_utc = sunrise_london_datetime_utc - timedelta(hours=time_diff)
-mankato_timezone = pytz.timezone("America/Chicago")
-mankato_sunrise_datetime = sunrise_manakto_datetime_utc.astimezone(mankato_timezone)
-
-#Converting sunset time to Mankato from London time
-sunset_london = str(datetime.utcfromtimestamp(response['sys']['sunset']))
-sunset_london_datetime = datetime.fromisoformat(sunset_london)
-sunset_london_datetime_utc = sunset_london_datetime.astimezone(pytz.utc)
-time_diff = 6
-sunset_manakto_datetime_utc = sunset_london_datetime_utc - timedelta(hours=time_diff)
-mankato_timezone = pytz.timezone("America/Chicago")
-mankato_sunset_datetime = sunset_manakto_datetime_utc.astimezone(mankato_timezone)
-#mn_sunset = datetime.isoformat(mankato_sunset_datetime)
-current_time = datetime.now()
-
-def Weather():
-   #info
-   #feels_like = round(response['main']['feels_like']-273.15,1)
-   city = response['name']
-   temp = response['main']['temp']
-   temp_max = response['main']['temp_max']
-   temp_min = response['main']['temp_min']
-   feels_like = response['main']['feels_like']
-   humidity = response['main']['humidity']
-   condition = response['weather'][0]['description']
-   visibility  = round(response['visibility']/1000,1)
-
-   #temp in C,F
-   tempC = round(KtoC(temp),1)
-   tempF = round(KtoF(temp),1)
-   temp_max_C = round(KtoC(temp_max),1)
-   temp_max_F = round(KtoF(temp_max),1)
-   temp_min_C = round(KtoC(temp_min),1)
-   temp_min_F = round(KtoF(temp_min),1)
-   feels_like_C = round(KtoC(feels_like),1)
-   feels_like_F = round(KtoF(feels_like),1)
-
-   #fonts
-   sun_emoji_font = ("TIMES NEW ROMAN",70)
-   feels_like_font = ("Monteserrat", 15)
-   visibility_font = ("Arial", 8)
-   city_font = ("Arial", 20)
-   temp_font = ("Helvetica", 20)
-   condition_font = ("TIMES NEW ROMAN", 20)
-   humidity_font = ("Arial", 8)
-   temp_max_font = ("Helvetica", 10)
-   sunrise_font = ("Arial", 8)
-   sunset_font = ("Arial" , 8)
-   
-   #Images
-   sun_emoji = "\U00002600"
-   moon_emoji = "\U0001F314"
-
-   #sun picture declared outside due to inssues within function
-
-   condition_lbl = Label(frame1, text = condition , fg = 'white', bg = 'black',font = condition_font)
-   condition_lbl.grid(column = 0 , row = 3)
-
-   feels_like_lbl = Label(frame1, text = "Feels like " + str(feels_like_F) + " °F", fg = 'white', bg = 'black',font = feels_like_font)
-   feels_like_lbl.grid(column = 0 , row = 4)
-
-   city_lbl = Label(frame1, text = city , fg = 'white', bg = 'black',font = city_font)
-   city_lbl.grid(column = 1 , row = 1)
-
-   temp_lbl = Label(frame1, text = str(tempF) + " °F", fg = 'white', bg = 'black',font = temp_font)
-   temp_lbl.grid(column = 1 , row = 2)
-
-   temp_max_lbl = Label(frame1, text = "H: " + str(temp_max_F) + " °F\n" + "L: " + str(temp_min_F) + " °F" , fg = 'white', bg = 'black',font = temp_max_font)
-   temp_max_lbl.grid(column = 1 , row = 3)
-
-Weather()
-sun = ImageTk.PhotoImage(Image.open("sunny.png"))
-moon = ImageTk.PhotoImage(Image.open("crescent_moon.png"))
-   
-def sun_moon():
-    if (current_time < mankato_sunset_datetime):
-        return sun
-    else:
-       return moon
+class Weather(LabelFrame):
+    weather_images = {
+                "clear sky": "sunny_light.png",
+                "few clouds": "partly-sunny_light.png",
+                "scattered clouds": "cloudy_light.png",
+                "overcast clouds" : "cloudy_light.png",
+                "broken clouds": "cloudy_light.png",
+                "shower rain": "change-rainlight.png",
+                "light rain" : "change-rainlight.png",
+                "moderate rain" : "night-rain_light.png",
+                "rain": "night-rain_light.png",
+                "thunderstorm": "thunder-storms_light.png",
+                "light snow" : "flurries_light.png",
+                "snow": "flurries_light.png",
+                "mist": "fog_light.png"
+                
+            }
+    def get_image_path(self,condition):
+        condition = str(condition)
+        return self.weather_images.get(condition.lower(), "crescent_moon.png")
     
-#sun_moon()     
-sun_lbl = Label(frame1, image = sun,bg = 'black' )
-sun_lbl.grid(column = 0 , row = 1, rowspan =2)
+    def __init__(self):
+        super().__init__()
+        #self.bg_image = ImageTk.PhotoImage(Image.open("25501.jpg").resize((800,500)))
+        self.bg_color = 'black' #'#4D99E7'
 
-#Calendar
+        self.frame1 = LabelFrame(root,padx = 10, pady = 10, bg = 'black', borderwidth=0)
+        self.frame1.place(x=1100,y=750)
 
-Calendarframe = LabelFrame(root,padx = 10, pady = 10, bg = 'black', border=0, width =700, height = 400)
-Calendarframe.place(x=100,y=400)
-today = datetime.today()
+        #Weather API
+        self.base_url="https://api.openweathermap.org/data/2.5/weather?"
+        self.api_key = "38fc658cdcc4cc6139caf2649ccc7bbb"
+        self.city= "Mankato"
+        self.complete_url=self.base_url+"appid="+self.api_key+"&q="+self.city
+        self.response = requests.get(self.complete_url).json()
 
-def Cal():
-    EEvent1 = 'Event 1 : Basketball\n'
-    EEvent2 = 'Event 2 : You have an Appointment tomorrow\n'
+        #All variables for current weather
+        self.city = self.response['name']
+        self.temp = self.response['main']['temp']
+        self.temp_max = self.response['main']['temp_max']
+        self.temp_min = self.response['main']['temp_min']
+        self.feels_like = self.response['main']['feels_like']
+        self.condition = self.response['weather'][0]['description']
 
-    #style = {"bg": "lightgray", "fg": "black", "bd": 2, "highlightthickness": 0, "selectbackground": "skyblue", "font": ("Arial", 10)}
-    cal = Calendar(Calendarframe, date_pattern = 'yyyy-mm-dd', year = today.year, month=today.month, day=today.day)
-    cal.place(x = 0, y =0)
-    date = str(datetime.now().date())
-    Date = Label(Calendarframe, text = strftime(" %a ") + date  , fg ='white', bg ='black', justify=LEFT)
-    Date.place(x = 0, y =200)
+        #Forecast api
+        self.exclude = "minute,hourly"
+        self.api_key = "38fc658cdcc4cc6139caf2649ccc7bbb"
+        self.forecast_url =  f"http://api.openweathermap.org/data/2.5/forecast?q={self.city}&appid={self.api_key}&units=imperial"
+        self.f_response = requests.get(self.forecast_url).json()
+        #lon = response['coord']['lon']
+        #lat = response['coord']['lat']
+
+        #Condition image
+        self.condition = self.response['weather'][0]['description']
+                                               
+        self.condition_image = ImageTk.PhotoImage(Image.open(self.get_image_path(self.condition)).resize((90,90)))
+        self.condition_lbl = Label(self.frame1, image = self.condition_image, bg = self.bg_color )
+        self.condition_lbl.grid(column = 0 , row = 1)
+
+        self.weather_images   
+        self.display_current_Weather()
+        self.display_weather_forecast(self.f_response)
+
     
-    Event1 = Label(Calendarframe, text = EEvent1 + EEvent2 , bg ='black', fg ='white', justify=LEFT)
-    Event1.place(x=300,y=0)
+    def KtoC(self,Kelvin):
+        Celsius = Kelvin - 273.15
+        return Celsius
+    def KtoF(self,Kelvin):
+        Farheneit = (Kelvin - 273.15)*9/5 + 32
+        return Farheneit    
     
+    def display_current_Weather(self):
+        #temp in C,F
+        tempC = round(self.KtoC(self.temp),1)
+        tempF = round(self.KtoF(self.temp),1)
+        temp_max_C = round(self.KtoC(self.temp_max),1)
+        temp_max_F = round(self.KtoF(self.temp_max),1)
+        temp_min_C = round(self.KtoC(self.temp_min),1)
+        temp_min_F = round(self.KtoF(self.temp_min),1)
+        feels_like_C = round(self.KtoC(self.feels_like),1)
+        feels_like_F = round(self.KtoF(self.feels_like),1)
 
-Cal()
+        #fonts
+        temp_font = ("Helvetica", 50)
+        feels_like_font = ("Monteserrat", 15)
+        city_font = ("Helvetica", 30)
+        condition_font = ("Helvetica", 20)
+        temp_max_font = ("Helvetica", 12)
+        
+        #image_label = Label(self.frame1, image = self.bg_image)
+        #image_label.place(x=0,y=0,relwidth=1,relheight=1)
+
+        city_lbl = Label(self.frame1, text = self.city , fg = 'white', bg = self.bg_color,font = city_font)
+        city_lbl.grid(column = 0 , row = 0, columnspan=3)
+
+        temp_lbl = Label(self.frame1, text = str(tempF) + " °F", fg = 'white', bg = self.bg_color,font = temp_font, justify= LEFT)
+        temp_lbl.grid(column = 1 , row = 1, columnspan= 2)
+
+        condition_lbl = Label(self.frame1, text = self.condition  , fg = 'white', bg = self.bg_color,font = condition_font, justify = LEFT)
+        condition_lbl.grid(column = 1 , row = 2)
+
+        temp_max_lbl = Label(self.frame1, text = "H: " + str(temp_max_F) + " °F\n" + "L: " + str(temp_min_F) + " °F" , fg = 'white', bg = self.bg_color,font = temp_max_font)
+        temp_max_lbl.grid(column = 0 , row = 2)
+
+    def display_weather_forecast(self,f_response):
+        forecast_count = 0
+        num_days = 5
+        row = 0
+        column = 3
+        temp_max_font = ("Helvetica", 12)
+        day_font = ("Helvetica", 14)
+
+        for forecast in f_response['list']:
+            date = datetime.strptime(forecast['dt_txt'], '%Y-%m-%d %H:%M:%S')
+            if date.hour == 12:  # Taking only one forecast per day
+                day_label = f" {date.strftime('%A')}" 
+                Label(self.frame1,fg = 'white',bg = self.bg_color, text="" + day_label[:4],font = day_font,justify = 'center',anchor = 'center').grid(row=row, column=column, padx=10, pady=5, sticky="w")
+            
+                cond = forecast['weather'][0]['description']
+                cond_image = ImageTk.PhotoImage(Image.open(self.get_image_path(cond)).resize((60, 60)))
+                # Create a label and set the image
+                cond_lbl = Label(self.frame1, image=cond_image, bg=self.bg_color)
+                cond_lbl.image = cond_image # Keep a reference to the image object
+                cond_lbl.grid(column=column, row=row+1)
+
+                forecast_label = f"{forecast['main']['temp']}°F"#temp
+                forecast_label += f"\n{forecast['weather'][0]['description']}"#condition
+                Label(self.frame1,fg = 'white',bg = self.bg_color, text=forecast_label[:17], font = temp_max_font).grid(row=row+2, column=column, padx=10, pady=5, sticky="w")
+                column+=1
+
+                forecast_count += 1
+                if forecast_count >= num_days:
+                    break
+    # #Converting sunrise time to Mankato from London time
+    # sunrise_london = str(datetime.utcfromtimestamp(response['sys']['sunrise']))
+    # sunrise_london_datetime = datetime.fromisoformat(sunrise_london)
+    # sunrise_london_datetime_utc = sunrise_london_datetime.astimezone(pytz.utc)
+    # time_diff = 6
+    # sunrise_manakto_datetime_utc = sunrise_london_datetime_utc - timedelta(hours=time_diff)
+    # mankato_timezone = pytz.timezone("America/Chicago")
+    # mankato_sunrise_datetime = sunrise_manakto_datetime_utc.astimezone(mankato_timezone)
+
+    # #Converting sunset time to Mankato from London time
+    # sunset_london = str(datetime.utcfromtimestamp(response['sys']['sunset']))
+    #  sunset_london_datetime = datetime.fromisoformat(sunset_london)
+    # sunset_london_datetime_utc = sunset_london_datetime.astimezone(pytz.utc)
+    # time_diff = 6
+    # sunset_manakto_datetime_utc = sunset_london_datetime_utc - timedelta(hours=time_diff)
+    # mankato_timezone = pytz.timezone("America/Chicago")
+    # mankato_sunset_datetime = sunset_manakto_datetime_utc.astimezone(mankato_timezone)
+    # #mn_sunset = datetime.isoformat(mankato_sunset_datetime)
+    # current_time = datetime.now()
+
+#Events
+class Events(LabelFrame):
+
+    def __init__(self):
+        super().__init__()
+        self.day_font = ("Roboto", 15)
+        self.date_font = ("Roboto", 18)
+        self.month_font = ("Helvetica", 12)
+        self.event_time_font = ("Helvetica", 12)
+        self.event_details_font = ("Helvetica", 18)
+        self.event_address_font = ("Helvetica", 12)
+
+        self.labelframe = LabelFrame(root, padx = 10,pady = 10, bg = 'black', fg = 'white', border=0, width =200, height = 400)
+        self.labelframe.place(x=60,y=200)
+
+        self.row = 0
+        self.column = 0
+        self.get_tasks_from_database()
+
+    def get_Events(self,user_id):
+        cursor.execute("""SELECT topic, location, event_date, start_time, end_time FROM base_event WHERE user_id = %s""", (user_id,))
+    
+        events = cursor.fetchall()
+        return events
+    
+    def get_tasks_from_database(self):
+        events = self.get_Events(10)
+
+        for event in events:
+            event_date = dt.datetime.strptime(str(event[2]), '%Y-%m-%d %H:%M:%S+00:00')
+            start_time = dt.datetime.strptime(str(event[3]), '%H:%M:%S')
+            end_time = dt.datetime.strptime(str(event[4]), '%H:%M:%S')
+
+            topic = event[0]
+            location = event[1]
+            day_name = event_date.strftime("%a")
+            day_number = event_date.day
+            month = event_date.strftime("%b")
+            start_time = start_time.strftime('%I:%M %p')
+            end_time = end_time.strftime('%I:%M %p')
+
+            event_day = Label(self.labelframe,text = day_name,bg = 'black', fg= 'white',font= self.day_font )
+            event_day.grid(row = self.row, column = self.column)
+
+            event_date = Label(self.labelframe,text = day_number,bg = 'black', fg= 'white',width=2, height=1,
+                               font= self.date_font,highlightthickness=1, highlightbackground="white" )
+            event_date.grid(row = self.row+1,column = self.column)
+
+            event_month_name = Label(self.labelframe,text = month + "\n" ,bg = 'black', fg= 'white',font= self.month_font)
+            event_month_name.grid(row = self.row+2,column = self.column)
+
+            event_time = Label(self.labelframe, text = start_time + " - " + end_time,bg = 'black', fg= 'white',font=self.event_time_font, justify=LEFT)
+            event_time.grid(row=self.row, column = self.column + 1,sticky="w")
+        
+            event_details = Label(self.labelframe, text = topic ,bg = 'black', fg= 'white',font=self.event_details_font, justify=LEFT )
+            event_details.grid(row=self.row+1, column = self.column + 1,sticky = "w")
+
+            event_address = Label(self.labelframe, text = location + "\n" ,bg = 'black', fg= 'white',font=self.event_address_font, justify=LEFT)
+            event_address.grid(row=self.row+2, column = self.column + 1, sticky = "w")
+
+            self.row += 3
 
 #News
+class News(LabelFrame):
+    def __init__(self,*args,**kwargs):
+        #This superclass is a constructor for the News Frame
+        super().__init__(*args, **kwargs)
+        #api_key = "0dcc3ef4f630463699f2f87b79983d75"
+        self.api_key = '651d6cfbee234d5abf3802bdba9eba82'
+        self.newsapi = NewsApiClient(self.api_key)
+        self.params = {
+            'q': '',
+            'language': 'en',
+            'sources' : 'espn',
+            #'country' : 'us'
+        }
+        self.news_articles = []
+        self.current_index = 0
+        self.batch_size = 4
+        self.F1 = Label()
 
-type = 'sports'
-api_Key = '651d6cfbee234d5abf3802bdba9eba82'
-api_key = "0dcc3ef4f630463699f2f87b79983d75"
-BASE_URL = f"https://newsapi.org/v2/top-headlines/"
-params = {
-    "sources": "cnn",  # Replace with your desired news source
-    "apiKey": api_key,
-}
+        self.Newsframe = LabelFrame(root, padx = 10, pady = 10, bg = 'black', width= 200,height=100,borderwidth=0)
+        self.Newsframe.place(x=60,y=750)
 
-# Making the request to the News API
-response = requests.get(BASE_URL, params=params)
+        self.headline_font = ("SEOGE UI",22)
+        self.news = Label(self.Newsframe, text = "Your morning News!", bg = 'black', fg = 'white', justify = LEFT,font = self.headline_font)
+        self.news.grid(row = 0, column =0,sticky='w')
 
-Newsframe = LabelFrame(root, padx = 10, pady = 10, bg = 'black', width= 100,height=100)
-Newsframe.place(x=800,y=200)
+        self.image = Image.open('search.png').resize((30, 30))
+        self.search_image = ImageTk.PhotoImage(self.image)
+        # Create a label widget to display the image
+        self.search = Label(self.Newsframe, image=self.search_image,bg='black')
+        self.search.grid(row=1, column=0,sticky='w')
+        # Keep a reference to the PhotoImage object
+        self.search.image = self.search_image
 
-def scroll_text(self):
-        self.canvas.move(self.text_id, 0, -1)
-        _, y = self.canvas.coords(self.text_id)
-        if y + self.text_height <= 0:
-            self.canvas.coords(self.text_id, 0, self.text_height)
-        self.after(20, self.scroll_text)
-
-def News():
-    
-    news_type = Label(Newsframe, text = type, bg = 'black', fg = 'white')
-    news_type.pack()
-
-    news = Label(Newsframe, text = "News", bg = 'black', fg = 'white',wraplength=50)
-    news.pack()
-    
-    
-    # Getting the response object
-    if response.status_code == 200:
-    # The 'response' object now contains information about the top headlines
-        news_data = response.json()
-
-    # Extracting descriptions and source names
-        articles = news_data.get("articles", [])
+        keyword_font = ('Helvetica',15)
+        if 'q' not in self.params or self.params['q'] == '':
+            self.keyword = Label(self.Newsframe, text="Everything", bg='black', fg='white', justify=LEFT, font=keyword_font)
+            self.keyword.place(x=self.search.winfo_reqwidth() + 10, y=self.search.winfo_reqheight()+4)
+        else:
+            self.keyword = Label(self.Newsframe, text=self.params.get('q'), bg='black', fg='white', justify=LEFT, font=keyword_font)
+            self.keyword.place(x=self.search.winfo_reqwidth() + 10, y=self.search.winfo_reqheight()+4)
         
-        for article in articles[:3]:
-            description = article.get("description")
-            source_name = article.get("source", {}).get("name")
-            published_at = article.get("publishedAt")
-            
+        self.fetch_news()
 
-            F1 = Label(Newsframe, text= description, font=("helvetica", 8, "bold"), bg='black', fg='white',wraplength=300,justify= LEFT)
-            F1.pack()
-            
-            #print(f"Description: {description}")
-            #print(f"Source Name: {source_name}")
-            #print(f"Published At: {published_at}")
-            #print("------")
-    else:
-        print(f"Error: {response.status_code} - {response.text}")
+    #This functions fetches the first set of news and new ones every 10 minutes
+    def fetch_news(self):
+        news_response = self.newsapi.get_everything(**self.params)
+        if news_response['status'] == 'ok':
+            self.news_articles = news_response['articles']
+            self.show_news()
+            # Schedule next fetch after 10 minutes (600 seconds)
+            self.after(864000, self.fetch_news)  # 600,000 milliseconds = 10 minutes
+        else:
+
+            self.F1 = Label(self.Newsframe, text= str(news_response['code']), font=("helvetica", 12, "bold"), bg='black',
+                         fg='white', wraplength=800)
+            # Schedule next fetch after 1 minute (60 seconds)
+            self.after(60000, self.fetch_news)  # 60,000 milliseconds = 1 minute
+
+    #This function shows the actual news on the frame
+    def show_news(self):
+        news = ""
+        starting_row =3
+        
+        for article in self.news_articles[self.current_index:self.current_index + self.batch_size]:
+            description = article['title']
+            source_name = article['source']['name']
+            news = source_name + ": " + description
+            #self here might be an error check it first
+            self.F1 = Label(self.Newsframe, text= news, font=("helvetica", 12, "bold"), bg='black',
+                         fg='white', wraplength=800)
+            self.F1.grid(row=starting_row, column=0, sticky="w")    
+            starting_row+=1
+            self.after(5000,self.F1.destroy)
+        self.after(5000, self.show_next_news)
     
-News()
+    #This funciton fetches new batch of news
+    def show_next_news(self):
+        # Show the next batch of news articles
+        self.current_index += self.batch_size
+        if self.current_index >= len(self.news_articles):
+            self.current_index = 0
+        self.show_news()
 
-
+    
 #Photo Gallery
+if __name__ == '__main__':
+    Time()
+    Weather()
+    News()
+    Events()
 
-
-root.mainloop()
+    root.mainloop()
