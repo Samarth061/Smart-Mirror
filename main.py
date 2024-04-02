@@ -25,6 +25,7 @@ root.iconbitmap("C:/Users/samar/Downloads/IMG_0249.ico")
 my_button = Button(root, text="Quit" , command = root.destroy)
 my_button.place(x=620, y=10)
 
+
 #Database
 while True:
         try:
@@ -46,19 +47,31 @@ while True:
 #Date and time
 class Time():
     def __init__(self):
-        self.lbl = Label(root, font=('Roboto', 40, 'bold'), bg='black', fg='white')
-        self.lbl.place(x=1640, y=30)
-        self.lbl2 = Label(root, font=('Open Sans', 20), bg='black', fg='white', justify=RIGHT)
-        self.lbl2.place(x=1730, y=100)
+        self.x_coordinate = 1000 #Label x position
+        self.y_coordinate = 40   #Label y position
+        #Time Label
+        self.time = Label(root, font=('Roboto', 40, 'bold'), bg='black', fg='white')
+        self.time.place(x=self.x_coordinate, y=self.y_coordinate)
+        #Day Date Label
+        self.day_date = Label(root, font=('Open Sans', 20), bg='black', fg='white', justify=RIGHT)
+        self.day_date.place(x=self.x_coordinate+85, y=self.y_coordinate+65)
+        
         self.time_display()
 
     def time_display(self):
         self.current_date = datetime.now()
         time_now = strftime('%I:%M %p\n')
         day_date = strftime('%a\n' + '%Y-%m-%d')
-        self.lbl.config(text=time_now)
-        self.lbl2.config(text=day_date)
-        self.lbl.after(1000, self.time_display)
+        self.time.config(text=time_now)
+        self.day_date.config(text=day_date)
+        self.time.after(1000, self.time_display)
+
+    def change_coordinates(self, new_x, new_y):
+        # Method to change coordinates
+        self.x_coordinate = new_x
+        self.y_coordinate = new_y
+        self.time.place(x=self.x_coordinate, y=self.y_coordinate)
+        self.day_date.place(x=self.x_coordinate+85, y=self.y_coordinate+65)
 
 #Weather
 class Weather(LabelFrame):
@@ -75,26 +88,37 @@ class Weather(LabelFrame):
                 "thunderstorm": "thunder-storms_light.png",
                 "light snow" : "flurries_light.png",
                 "snow": "flurries_light.png",
-                "mist": "fog_light.png"
-                
+                "mist": "fog_light.png",
+                "smoke": "fog_light.png"     
             }
     def get_image_path(self,condition):
         condition = str(condition)
         return self.weather_images.get(condition.lower(), "crescent_moon.png")
     
+    def get_location(self,user_id):
+        cursor.execute(
+        """SELECT location FROM base_weather WHERE user_id = %s""", (user_id,)
+        )
+        location = cursor.fetchone()
+
+        return location[0]
+    
     def __init__(self):
         super().__init__()
         #self.bg_image = ImageTk.PhotoImage(Image.open("25501.jpg").resize((800,500)))
         self.bg_color = 'black' #'#4D99E7'
+        self.x_coordinate = 50
+        self.y_coordinate = 60
 
-        self.frame1 = LabelFrame(root,padx = 10, pady = 10, bg = 'black', borderwidth=0)
-        self.frame1.place(x=1100,y=750)
+        #Weather Frame that holds all the individual widgets
+        self.weatherframe = LabelFrame(root,padx = 10, pady = 10, bg = 'black', borderwidth=0)
+        self.weatherframe.place(x=self.x_coordinate,y=self.y_coordinate)
 
         #Weather API
-        self.base_url="https://api.openweathermap.org/data/2.5/weather?"
+        self.base_url ="https://api.openweathermap.org/data/2.5/weather?"
         self.api_key = "38fc658cdcc4cc6139caf2649ccc7bbb"
-        self.city= "Mankato"
-        self.complete_url=self.base_url+"appid="+self.api_key+"&q="+self.city
+        self.city = self.get_location(USERID)
+        self.complete_url = self.base_url+"appid="+self.api_key+"&q="+self.city
         self.response = requests.get(self.complete_url).json()
 
         #All variables for current weather
@@ -117,7 +141,7 @@ class Weather(LabelFrame):
         self.condition = self.response['weather'][0]['description']
                                                
         self.condition_image = ImageTk.PhotoImage(Image.open(self.get_image_path(self.condition)).resize((90,90)))
-        self.condition_lbl = Label(self.frame1, image = self.condition_image, bg = self.bg_color )
+        self.condition_lbl = Label(self.weatherframe, image = self.condition_image, bg = self.bg_color )
         self.condition_lbl.grid(column = 0 , row = 1)
 
         self.weather_images   
@@ -150,25 +174,29 @@ class Weather(LabelFrame):
         condition_font = ("Helvetica", 20)
         temp_max_font = ("Helvetica", 12)
         
-        #image_label = Label(self.frame1, image = self.bg_image)
+        #image_label = Label(self.weatherframe, image = self.bg_image)
         #image_label.place(x=0,y=0,relwidth=1,relheight=1)
 
-        city_lbl = Label(self.frame1, text = self.city , fg = 'white', bg = self.bg_color,font = city_font)
+        city_lbl = Label(self.weatherframe, text = self.city , fg = 'white', bg = self.bg_color,font = city_font)
         city_lbl.grid(column = 0 , row = 0, columnspan=3)
 
-        temp_lbl = Label(self.frame1, text = str(tempF) + " °F", fg = 'white', bg = self.bg_color,font = temp_font, justify= LEFT)
+        temp_lbl = Label(self.weatherframe, text = str(tempF) + " °F", fg = 'white', bg = self.bg_color,font = temp_font, justify= LEFT)
         temp_lbl.grid(column = 1 , row = 1, columnspan= 2)
 
-        condition_lbl = Label(self.frame1, text = self.condition  , fg = 'white', bg = self.bg_color,font = condition_font, justify = LEFT)
+        condition_lbl = Label(self.weatherframe, text = self.condition  , fg = 'white', bg = self.bg_color,font = condition_font, justify = LEFT)
         condition_lbl.grid(column = 1 , row = 2)
 
-        temp_max_lbl = Label(self.frame1, text = "H: " + str(temp_max_F) + " °F\n" + "L: " + str(temp_min_F) + " °F" , fg = 'white', bg = self.bg_color,font = temp_max_font)
+        temp_max_lbl = Label(self.weatherframe, text = "H: " + str(temp_max_F) + " °F\n" + "L: " + str(temp_min_F) + " °F" , fg = 'white', bg = self.bg_color,font = temp_max_font)
         temp_max_lbl.grid(column = 0 , row = 2)
 
     def display_weather_forecast(self,f_response):
+        #Start day
         forecast_count = 0
+        #How many days to show
         num_days = 5
+        #This is the row that it starts from inside the weatherframe
         row = 0
+        #This is the column that it starts from inside the weatherframe
         column = 3
         temp_max_font = ("Helvetica", 12)
         day_font = ("Helvetica", 14)
@@ -177,42 +205,29 @@ class Weather(LabelFrame):
             date = datetime.strptime(forecast['dt_txt'], '%Y-%m-%d %H:%M:%S')
             if date.hour == 12:  # Taking only one forecast per day
                 day_label = f" {date.strftime('%A')}" 
-                Label(self.frame1,fg = 'white',bg = self.bg_color, text="" + day_label[:4],font = day_font,justify = 'center',anchor = 'center').grid(row=row, column=column, padx=10, pady=5, sticky="w")
+                Label(self.weatherframe,fg = 'white',bg = self.bg_color, text="" + day_label[:4],font = day_font,justify = 'center',anchor = 'center').grid(row=row, column=column, padx=10, pady=5, sticky="w")
             
                 cond = forecast['weather'][0]['description']
                 cond_image = ImageTk.PhotoImage(Image.open(self.get_image_path(cond)).resize((60, 60)))
                 # Create a label and set the image
-                cond_lbl = Label(self.frame1, image=cond_image, bg=self.bg_color)
+                cond_lbl = Label(self.weatherframe, image=cond_image, bg=self.bg_color)
                 cond_lbl.image = cond_image # Keep a reference to the image object
                 cond_lbl.grid(column=column, row=row+1)
 
                 forecast_label = f"{forecast['main']['temp']}°F"#temp
                 forecast_label += f"\n{forecast['weather'][0]['description']}"#condition
-                Label(self.frame1,fg = 'white',bg = self.bg_color, text=forecast_label[:17], font = temp_max_font).grid(row=row+2, column=column, padx=10, pady=5, sticky="w")
+                Label(self.weatherframe,fg = 'white',bg = self.bg_color, text=forecast_label[:17], font = temp_max_font).grid(row=row+2, column=column, padx=10, pady=5, sticky="w")
                 column+=1
 
                 forecast_count += 1
                 if forecast_count >= num_days:
                     break
-    # #Converting sunrise time to Mankato from London time
-    # sunrise_london = str(datetime.utcfromtimestamp(response['sys']['sunrise']))
-    # sunrise_london_datetime = datetime.fromisoformat(sunrise_london)
-    # sunrise_london_datetime_utc = sunrise_london_datetime.astimezone(pytz.utc)
-    # time_diff = 6
-    # sunrise_manakto_datetime_utc = sunrise_london_datetime_utc - timedelta(hours=time_diff)
-    # mankato_timezone = pytz.timezone("America/Chicago")
-    # mankato_sunrise_datetime = sunrise_manakto_datetime_utc.astimezone(mankato_timezone)
 
-    # #Converting sunset time to Mankato from London time
-    # sunset_london = str(datetime.utcfromtimestamp(response['sys']['sunset']))
-    #  sunset_london_datetime = datetime.fromisoformat(sunset_london)
-    # sunset_london_datetime_utc = sunset_london_datetime.astimezone(pytz.utc)
-    # time_diff = 6
-    # sunset_manakto_datetime_utc = sunset_london_datetime_utc - timedelta(hours=time_diff)
-    # mankato_timezone = pytz.timezone("America/Chicago")
-    # mankato_sunset_datetime = sunset_manakto_datetime_utc.astimezone(mankato_timezone)
-    # #mn_sunset = datetime.isoformat(mankato_sunset_datetime)
-    # current_time = datetime.now()
+    def change_coordinates(self, new_x, new_y):
+        # Method to change coordinates
+        self.x_coordinate = new_x
+        self.y_coordinate = new_y
+        self.weatherframe.place(x=self.x_coordinate, y=self.y_coordinate)
 
 #Events
 class Events(LabelFrame):
@@ -226,10 +241,15 @@ class Events(LabelFrame):
         self.event_details_font = ("Helvetica", 18)
         self.event_address_font = ("Helvetica", 12)
 
-        self.labelframe = LabelFrame(root, padx = 10,pady = 10, bg = 'black', fg = 'white', border=0, width =200, height = 400)
-        self.labelframe.place(x=60,y=200)
+        self.x_coordinate = 950
+        self.y_coordinate = 250
+        self.eventframe = LabelFrame(root, padx = 10,pady = 10, bg = 'black', fg = 'white', border=0, width =200, height = 400)
+        self.eventframe.place(x=self.x_coordinate,y=self.y_coordinate)
 
-        self.row = 0
+        self.titlelabel = Label(self.eventframe, text = "Today's Events", bg = 'black', fg = 'white', font = self.event_details_font)
+        #self.titlelabel.grid(row = 0, column = 0)
+
+        self.row = 1
         self.column = 0
         self.get_tasks_from_database()
 
@@ -240,7 +260,8 @@ class Events(LabelFrame):
         return events
     
     def get_tasks_from_database(self):
-        events = self.get_Events(10)
+        events = self.get_Events(USERID)
+        current_date = dt.date.today()
 
         for event in events:
             event_date = dt.datetime.strptime(str(event[2]), '%Y-%m-%d %H:%M:%S+00:00')
@@ -255,39 +276,54 @@ class Events(LabelFrame):
             start_time = start_time.strftime('%I:%M %p')
             end_time = end_time.strftime('%I:%M %p')
 
-            event_day = Label(self.labelframe,text = day_name,bg = 'black', fg= 'white',font= self.day_font )
-            event_day.grid(row = self.row, column = self.column)
+            if (event_date == current_date):
+                event_day = Label(self.eventframe,text = day_name,bg = 'black', fg= 'white',font= self.day_font )
+                event_day.grid(row = self.row, column = self.column)
 
-            event_date = Label(self.labelframe,text = day_number,bg = 'black', fg= 'white',width=2, height=1,
+                event_date = Label(self.eventframe,text = day_number,bg = 'black', fg= 'white',width=2, height=1,
                                font= self.date_font,highlightthickness=1, highlightbackground="white" )
-            event_date.grid(row = self.row+1,column = self.column)
+                event_date.grid(row = self.row+1,column = self.column)
 
-            event_month_name = Label(self.labelframe,text = month + "\n" ,bg = 'black', fg= 'white',font= self.month_font)
-            event_month_name.grid(row = self.row+2,column = self.column)
+                event_month_name = Label(self.eventframe,text = month + "\n" ,bg = 'black', fg= 'white',font= self.month_font)
+                event_month_name.grid(row = self.row+2,column = self.column)
 
-            event_time = Label(self.labelframe, text = start_time + " - " + end_time,bg = 'black', fg= 'white',font=self.event_time_font, justify=LEFT)
-            event_time.grid(row=self.row, column = self.column + 1,sticky="w")
+                event_time = Label(self.eventframe, text = start_time + " - " + end_time,bg = 'black', fg= 'white',font=self.event_time_font, justify=LEFT)
+                event_time.grid(row=self.row, column = self.column + 1,sticky="w")
         
-            event_details = Label(self.labelframe, text = topic ,bg = 'black', fg= 'white',font=self.event_details_font, justify=LEFT )
-            event_details.grid(row=self.row+1, column = self.column + 1,sticky = "w")
+                event_details = Label(self.eventframe, text = topic ,bg = 'black', fg= 'white',font=self.event_details_font, justify=LEFT )
+                event_details.grid(row=self.row+1, column = self.column + 1,sticky = "w")
 
-            event_address = Label(self.labelframe, text = location + "\n" ,bg = 'black', fg= 'white',font=self.event_address_font, justify=LEFT)
-            event_address.grid(row=self.row+2, column = self.column + 1, sticky = "w")
+                event_address = Label(self.eventframe, text = location + "\n" ,bg = 'black', fg= 'white',font=self.event_address_font, justify=LEFT)
+                event_address.grid(row=self.row+2, column = self.column + 1, sticky = "w")
 
-            self.row += 3
+                self.row += 3
+
+    def change_coordinates(self, new_x, new_y):
+        # Method to change coordinates
+        self.x_coordinate = new_x
+        self.y_coordinate = new_y
+        self.eventframe.place(x=self.x_coordinate, y=self.y_coordinate)
 
 #News
 class News(LabelFrame):
+    def get_news(self,user_id):
+        cursor.execute(
+         """SELECT source, topic FROM base_news where user_id = %s""", (user_id,)
+        )
+        news = cursor.fetchone()
+        return news
+    
     def __init__(self,*args,**kwargs):
         #This superclass is a constructor for the News Frame
         super().__init__(*args, **kwargs)
+        source = self.get_news(USERID)[0]
         #api_key = "0dcc3ef4f630463699f2f87b79983d75"
         self.api_key = '651d6cfbee234d5abf3802bdba9eba82'
         self.newsapi = NewsApiClient(self.api_key)
         self.params = {
             'q': '',
             'language': 'en',
-            'sources' : 'espn',
+            'sources' : source,
             #'country' : 'us'
         }
         self.news_articles = []
@@ -295,8 +331,10 @@ class News(LabelFrame):
         self.batch_size = 4
         self.F1 = Label()
 
+        self.x_coordinate = 60
+        self.y_coordinate = 440
         self.Newsframe = LabelFrame(root, padx = 10, pady = 10, bg = 'black', width= 200,height=100,borderwidth=0)
-        self.Newsframe.place(x=60,y=750)
+        self.Newsframe.place(x=self.x_coordinate, y=self.y_coordinate)
 
         self.headline_font = ("SEOGE UI",22)
         self.news = Label(self.Newsframe, text = "Your morning News!", bg = 'black', fg = 'white', justify = LEFT,font = self.headline_font)
@@ -359,8 +397,14 @@ class News(LabelFrame):
         if self.current_index >= len(self.news_articles):
             self.current_index = 0
         self.show_news()
-
     
+    def change_coordinates(self, new_x, new_y):
+        # Method to change coordinates
+        self.x_coordinate = new_x
+        self.y_coordinate = new_y
+        self.Newsframe.place(x=self.x_coordinate, y=self.y_coordinate)
+
+USERID = 10    
 #Photo Gallery
 if __name__ == '__main__':
     Time()
@@ -369,3 +413,5 @@ if __name__ == '__main__':
     Events()
 
     root.mainloop()
+
+
