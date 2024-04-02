@@ -264,7 +264,7 @@ class Events(LabelFrame):
         current_date = dt.date.today()
 
         for event in events:
-            event_date = dt.datetime.strptime(str(event[2]), '%Y-%m-%d %H:%M:%S+00:00')
+            event_date = dt.datetime.strptime(str(event[2]), '%Y-%m-%d %H:%M:%S+00:00').date()
             start_time = dt.datetime.strptime(str(event[3]), '%H:%M:%S')
             end_time = dt.datetime.strptime(str(event[4]), '%H:%M:%S')
 
@@ -284,19 +284,27 @@ class Events(LabelFrame):
                                font= self.date_font,highlightthickness=1, highlightbackground="white" )
                 event_date.grid(row = self.row+1,column = self.column)
 
-                event_month_name = Label(self.eventframe,text = month + "\n" ,bg = 'black', fg= 'white',font= self.month_font)
+                event_month_name = Label(self.eventframe,text = month + "\n" ,bg = 'black',
+                                          fg= 'white',font= self.month_font)
                 event_month_name.grid(row = self.row+2,column = self.column)
 
-                event_time = Label(self.eventframe, text = start_time + " - " + end_time,bg = 'black', fg= 'white',font=self.event_time_font, justify=LEFT)
+                event_time = Label(self.eventframe, text = start_time + " - " + end_time,
+                                   bg = 'black', fg= 'white',font=self.event_time_font, justify=LEFT)
                 event_time.grid(row=self.row, column = self.column + 1,sticky="w")
         
-                event_details = Label(self.eventframe, text = topic ,bg = 'black', fg= 'white',font=self.event_details_font, justify=LEFT )
+                event_details = Label(self.eventframe, text = topic ,bg = 'black', fg= 'white',
+                                      font=self.event_details_font, justify=LEFT )
                 event_details.grid(row=self.row+1, column = self.column + 1,sticky = "w")
 
-                event_address = Label(self.eventframe, text = location + "\n" ,bg = 'black', fg= 'white',font=self.event_address_font, justify=LEFT)
+                event_address = Label(self.eventframe, text = location + "\n" ,bg = 'black',
+                                       fg= 'white',font=self.event_address_font, justify=LEFT)
                 event_address.grid(row=self.row+2, column = self.column + 1, sticky = "w")
 
                 self.row += 3
+
+            #elif (event_date != current_date):
+                #event = Label(self.eventframe,text = "No events today!",bg = 'black', fg= 'white',font= self.day_font )
+                #event.grid(row = self.row, column = self.column)
 
     def change_coordinates(self, new_x, new_y):
         # Method to change coordinates
@@ -404,7 +412,7 @@ class News(LabelFrame):
         self.y_coordinate = new_y
         self.Newsframe.place(x=self.x_coordinate, y=self.y_coordinate)
 
-USERID = 10    
+USERID = 15    
 #Photo Gallery
 if __name__ == '__main__':
     Time()
