@@ -251,6 +251,7 @@ class Events(LabelFrame):
 
         self.row = 1
         self.column = 0
+        self.event_count = 0
         self.get_tasks_from_database()
 
     def get_Events(self,user_id):
@@ -301,6 +302,10 @@ class Events(LabelFrame):
                 event_address.grid(row=self.row+2, column = self.column + 1, sticky = "w")
 
                 self.row += 3
+                self.event_count += 1
+            
+            if(self.event_count == 4):
+                break
 
             #elif (event_date != current_date):
                 #event = Label(self.eventframe,text = "No events today!",bg = 'black', fg= 'white',font= self.day_font )
