@@ -25,7 +25,6 @@ root.iconbitmap("C:/Users/samar/Downloads/IMG_0249.ico")
 my_button = Button(root, text="Quit" , command = root.destroy)
 my_button.place(x=620, y=10)
 
-
 #Database
 while True:
         try:
@@ -44,11 +43,30 @@ while True:
             print("Error: ", error)
             time.sleep(2)  # let it keeps trying when failed
 
+def choose_user():
+    cursor.execute(
+        """SELECT user_id, username FROM base_mirrorsync""",
+    )
+    user = cursor.fetchone()
+    time.sleep(10)
+    return user
+
+curr_user = choose_user()[0]
+
+# Get mirror display number of a user using id
+def get_display(user_id):
+    cursor.execute(
+        """SELECT display FROM base_mirrordisplay where user_id = %s""", (user_id,)
+    )
+    display = cursor.fetchone()
+
+    return display[0]
+
 #Date and time
 class Time():
     def __init__(self):
         self.x_coordinate = 1000 #Label x position
-        self.y_coordinate = 40   #Label y position
+        self.y_coordinate = 58   #Label y position
         #Time Label
         self.time = Label(root, font=('Roboto', 40, 'bold'), bg='black', fg='white')
         self.time.place(x=self.x_coordinate, y=self.y_coordinate)
@@ -91,6 +109,7 @@ class Weather(LabelFrame):
                 "mist": "fog_light.png",
                 "smoke": "fog_light.png"     
             }
+    
     def get_image_path(self,condition):
         condition = str(condition)
         return self.weather_images.get(condition.lower(), "crescent_moon.png")
@@ -103,21 +122,21 @@ class Weather(LabelFrame):
 
         return location[0]
     
-    def __init__(self):
+    def __init__(self,user_id):
         super().__init__()
         #self.bg_image = ImageTk.PhotoImage(Image.open("25501.jpg").resize((800,500)))
         self.bg_color = 'black' #'#4D99E7'
         self.x_coordinate = 50
         self.y_coordinate = 60
-
         #Weather Frame that holds all the individual widgets
+        self.USER_ID = user_id
         self.weatherframe = LabelFrame(root,padx = 10, pady = 10, bg = 'black', borderwidth=0)
         self.weatherframe.place(x=self.x_coordinate,y=self.y_coordinate)
 
         #Weather API
         self.base_url ="https://api.openweathermap.org/data/2.5/weather?"
         self.api_key = "38fc658cdcc4cc6139caf2649ccc7bbb"
-        self.city = self.get_location(USERID)
+        self.city = self.get_location(self.USER_ID)
         self.complete_url = self.base_url+"appid="+self.api_key+"&q="+self.city
         self.response = requests.get(self.complete_url).json()
 
@@ -134,8 +153,6 @@ class Weather(LabelFrame):
         self.api_key = "38fc658cdcc4cc6139caf2649ccc7bbb"
         self.forecast_url =  f"http://api.openweathermap.org/data/2.5/forecast?q={self.city}&appid={self.api_key}&units=imperial"
         self.f_response = requests.get(self.forecast_url).json()
-        #lon = response['coord']['lon']
-        #lat = response['coord']['lat']
 
         #Condition image
         self.condition = self.response['weather'][0]['description']
@@ -173,9 +190,6 @@ class Weather(LabelFrame):
         city_font = ("Helvetica", 30)
         condition_font = ("Helvetica", 20)
         temp_max_font = ("Helvetica", 12)
-        
-        #image_label = Label(self.weatherframe, image = self.bg_image)
-        #image_label.place(x=0,y=0,relwidth=1,relheight=1)
 
         city_lbl = Label(self.weatherframe, text = self.city , fg = 'white', bg = self.bg_color,font = city_font)
         city_lbl.grid(column = 0 , row = 0, columnspan=3)
@@ -205,7 +219,9 @@ class Weather(LabelFrame):
             date = datetime.strptime(forecast['dt_txt'], '%Y-%m-%d %H:%M:%S')
             if date.hour == 12:  # Taking only one forecast per day
                 day_label = f" {date.strftime('%A')}" 
-                Label(self.weatherframe,fg = 'white',bg = self.bg_color, text="" + day_label[:4],font = day_font,justify = 'center',anchor = 'center').grid(row=row, column=column, padx=10, pady=5, sticky="w")
+                Label(self.weatherframe,fg = 'white',bg = self.bg_color,
+                     text="" + day_label[:4],font = day_font,justify = 'center',
+                     anchor = 'center').grid(row=row, column=column, padx=10, pady=5, sticky="w")
             
                 cond = forecast['weather'][0]['description']
                 cond_image = ImageTk.PhotoImage(Image.open(self.get_image_path(cond)).resize((60, 60)))
@@ -216,7 +232,8 @@ class Weather(LabelFrame):
 
                 forecast_label = f"{forecast['main']['temp']}°F"#temp
                 forecast_label += f"\n{forecast['weather'][0]['description']}"#condition
-                Label(self.weatherframe,fg = 'white',bg = self.bg_color, text=forecast_label[:17], font = temp_max_font).grid(row=row+2, column=column, padx=10, pady=5, sticky="w")
+                Label(self.weatherframe,fg = 'white',bg = self.bg_color, text=forecast_label[:18],
+                       font = temp_max_font).grid(row=row+2, column=column, padx=10, pady=5, sticky="w")
                 column+=1
 
                 forecast_count += 1
@@ -232,7 +249,8 @@ class Weather(LabelFrame):
 #Events
 class Events(LabelFrame):
 
-    def __init__(self):
+    def __init__(self,user_id):
+        self.USER_ID = user_id
         super().__init__()
         self.day_font = ("Roboto", 15)
         self.date_font = ("Roboto", 18)
@@ -242,11 +260,13 @@ class Events(LabelFrame):
         self.event_address_font = ("Helvetica", 12)
 
         self.x_coordinate = 950
-        self.y_coordinate = 250
-        self.eventframe = LabelFrame(root, padx = 10,pady = 10, bg = 'black', fg = 'white', border=0, width =200, height = 400)
+        self.y_coordinate = 320
+        self.eventframe = LabelFrame(root, padx = 10,pady = 10, bg = 'black',
+                                      fg = 'white', border=0, width =200, height = 400)
         self.eventframe.place(x=self.x_coordinate,y=self.y_coordinate)
 
-        self.titlelabel = Label(self.eventframe, text = "Today's Events", bg = 'black', fg = 'white', font = self.event_details_font)
+        self.titlelabel = Label(self.eventframe, text = "Today's Events", bg = 'black',
+                                 fg = 'white', font = self.event_details_font)
         #self.titlelabel.grid(row = 0, column = 0)
 
         self.row = 1
@@ -255,15 +275,24 @@ class Events(LabelFrame):
         self.get_tasks_from_database()
 
     def get_Events(self,user_id):
-        cursor.execute("""SELECT topic, location, event_date, start_time, end_time FROM base_event WHERE user_id = %s""", (user_id,))
+        cursor.execute("""SELECT topic, location, event_date, start_time, 
+                       end_time FROM base_event WHERE user_id = %s ORDER BY event_date ASC,
+                       start_time ASC;""", (user_id,))
     
         events = cursor.fetchall()
         return events
     
     def get_tasks_from_database(self):
-        events = self.get_Events(USERID)
+        events = self.get_Events(self.USER_ID)
         current_date = dt.date.today()
 
+        def is_within_next_4_days(event_date, current_date):
+            # Calculate the date range for the next 3 days
+            next_4_days = [current_date + dt.timedelta(days=i) for i in range(4)]
+
+            # Check if event_date falls within the next 3 days
+            return event_date in next_4_days
+        
         for event in events:
             event_date = dt.datetime.strptime(str(event[2]), '%Y-%m-%d %H:%M:%S+00:00').date()
             start_time = dt.datetime.strptime(str(event[3]), '%H:%M:%S')
@@ -277,7 +306,7 @@ class Events(LabelFrame):
             start_time = start_time.strftime('%I:%M %p')
             end_time = end_time.strftime('%I:%M %p')
 
-            if (event_date == current_date):
+            if (is_within_next_4_days(event_date,current_date)):
                 event_day = Label(self.eventframe,text = day_name,bg = 'black', fg= 'white',font= self.day_font )
                 event_day.grid(row = self.row, column = self.column)
 
@@ -326,10 +355,11 @@ class News(LabelFrame):
         news = cursor.fetchone()
         return news
     
-    def __init__(self,*args,**kwargs):
+    def __init__(self,user_id,*args,**kwargs):
+        self.USER_ID = user_id
         #This superclass is a constructor for the News Frame
         super().__init__(*args, **kwargs)
-        source = self.get_news(USERID)[0]
+        source = self.get_news(self.USER_ID)[0]
         #api_key = "0dcc3ef4f630463699f2f87b79983d75"
         self.api_key = '651d6cfbee234d5abf3802bdba9eba82'
         self.newsapi = NewsApiClient(self.api_key)
@@ -416,14 +446,13 @@ class News(LabelFrame):
         self.x_coordinate = new_x
         self.y_coordinate = new_y
         self.Newsframe.place(x=self.x_coordinate, y=self.y_coordinate)
-
-USERID = 15    
+    
 #Photo Gallery
 if __name__ == '__main__':
     Time()
-    Weather()
-    News()
-    Events()
+    Weather(15)
+    News(15)
+    Events(15)
 
     root.mainloop()
 
