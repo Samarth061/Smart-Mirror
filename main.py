@@ -6,7 +6,7 @@ from datetime import datetime
 from newsapi import NewsApiClient
 import psycopg2
 import time
-import datetime as dt
+import datetime as dt #Need this for events due to some issues
 
 root = Tk()
 
@@ -43,15 +43,13 @@ while True:
             print("Error: ", error)
             time.sleep(2)  # let it keeps trying when failed
 
+#Choose the current user from MirrorSync's table
 def choose_user():
     cursor.execute(
-        """SELECT user_id, username FROM base_mirrorsync""",
+        """SELECT user_id FROM base_mirrorsync""",
     )
     user = cursor.fetchone()
-    time.sleep(10)
-    return user
-
-curr_user = choose_user()[0]
+    return user[0]
 
 # Get mirror display number of a user using id
 def get_display(user_id):
@@ -76,6 +74,7 @@ class Time():
         
         self.time_display()
 
+    #Shows current date and time
     def time_display(self):
         self.current_date = datetime.now()
         time_now = strftime('%I:%M %p\n')
@@ -107,13 +106,16 @@ class Weather(LabelFrame):
                 "light snow" : "flurries_light.png",
                 "snow": "flurries_light.png",
                 "mist": "fog_light.png",
-                "smoke": "fog_light.png"     
+                "smoke": "fog_light.png" ,
+                "haze" : "fog_light.png"  
             }
     
+    # Get the image from saved images
     def get_image_path(self,condition):
         condition = str(condition)
         return self.weather_images.get(condition.lower(), "crescent_moon.png")
     
+    # Get location of a user using id
     def get_location(self,user_id):
         cursor.execute(
         """SELECT location FROM base_weather WHERE user_id = %s""", (user_id,)
@@ -148,7 +150,7 @@ class Weather(LabelFrame):
         self.feels_like = self.response['main']['feels_like']
         self.condition = self.response['weather'][0]['description']
 
-        #Forecast api
+        #Forecast API
         self.exclude = "minute,hourly"
         self.api_key = "38fc658cdcc4cc6139caf2649ccc7bbb"
         self.forecast_url =  f"http://api.openweathermap.org/data/2.5/forecast?q={self.city}&appid={self.api_key}&units=imperial"
@@ -165,7 +167,6 @@ class Weather(LabelFrame):
         self.display_current_Weather()
         self.display_weather_forecast(self.f_response)
 
-    
     def KtoC(self,Kelvin):
         Celsius = Kelvin - 273.15
         return Celsius
@@ -220,7 +221,7 @@ class Weather(LabelFrame):
             if date.hour == 12:  # Taking only one forecast per day
                 day_label = f" {date.strftime('%A')}" 
                 Label(self.weatherframe,fg = 'white',bg = self.bg_color,
-                     text="" + day_label[:4],font = day_font,justify = 'center',
+                     text="   " + day_label[:4],font = day_font,justify = 'center',
                      anchor = 'center').grid(row=row, column=column, padx=10, pady=5, sticky="w")
             
                 cond = forecast['weather'][0]['description']
@@ -287,10 +288,10 @@ class Events(LabelFrame):
         current_date = dt.date.today()
 
         def is_within_next_4_days(event_date, current_date):
-            # Calculate the date range for the next 3 days
+            # Calculate the date range for the next 4 days
             next_4_days = [current_date + dt.timedelta(days=i) for i in range(4)]
 
-            # Check if event_date falls within the next 3 days
+            # Check if event_date falls within the next 4 days
             return event_date in next_4_days
         
         for event in events:
@@ -410,7 +411,6 @@ class News(LabelFrame):
             # Schedule next fetch after 10 minutes (600 seconds)
             self.after(864000, self.fetch_news)  # 600,000 milliseconds = 10 minutes
         else:
-
             self.F1 = Label(self.Newsframe, text= str(news_response['code']), font=("helvetica", 12, "bold"), bg='black',
                          fg='white', wraplength=800)
             # Schedule next fetch after 1 minute (60 seconds)
@@ -433,7 +433,7 @@ class News(LabelFrame):
             self.after(5000,self.F1.destroy)
         self.after(5000, self.show_next_news)
     
-    #This funciton fetches new batch of news
+    #This function fetches new batch of news
     def show_next_news(self):
         # Show the next batch of news articles
         self.current_index += self.batch_size
@@ -450,9 +450,9 @@ class News(LabelFrame):
 #Photo Gallery
 if __name__ == '__main__':
     Time()
-    Weather(15)
     News(15)
     Events(15)
+    Weather(15)
 
     root.mainloop()
 
