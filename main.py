@@ -46,10 +46,10 @@ while True:
 #Choose the current user from MirrorSync's table
 def choose_user():
     cursor.execute(
-        """SELECT user_id FROM base_mirrorsync""",
+        """SELECT user_id, username FROM base_mirrorsync""",
     )
     user = cursor.fetchone()
-    return user[0]
+    return user
 
 # Get mirror display number of a user using id
 def get_display(user_id):
@@ -91,6 +91,15 @@ class Time():
         self.day_date.place(x=self.x_coordinate+85, y=self.y_coordinate+65)
 
 #Weather
+# Get location of a user using id
+def get_location(user_id):
+        cursor.execute(
+        """SELECT location FROM base_weather WHERE user_id = %s""", (user_id,)
+        )
+        location = cursor.fetchone()
+
+        return location[0]
+    
 class Weather(LabelFrame):
     weather_images = {
                 "clear sky": "sunny_light.png",
@@ -115,15 +124,6 @@ class Weather(LabelFrame):
         condition = str(condition)
         return self.weather_images.get(condition.lower(), "crescent_moon.png")
     
-    # Get location of a user using id
-    def get_location(self,user_id):
-        cursor.execute(
-        """SELECT location FROM base_weather WHERE user_id = %s""", (user_id,)
-        )
-        location = cursor.fetchone()
-
-        return location[0]
-    
     def __init__(self,user_id):
         super().__init__()
         #self.bg_image = ImageTk.PhotoImage(Image.open("25501.jpg").resize((800,500)))
@@ -138,7 +138,7 @@ class Weather(LabelFrame):
         #Weather API
         self.base_url ="https://api.openweathermap.org/data/2.5/weather?"
         self.api_key = "38fc658cdcc4cc6139caf2649ccc7bbb"
-        self.city = self.get_location(self.USER_ID)
+        self.city = get_location(self.USER_ID)
         self.complete_url = self.base_url+"appid="+self.api_key+"&q="+self.city
         self.response = requests.get(self.complete_url).json()
 
@@ -192,16 +192,20 @@ class Weather(LabelFrame):
         condition_font = ("Helvetica", 20)
         temp_max_font = ("Helvetica", 12)
 
-        city_lbl = Label(self.weatherframe, text = self.city , fg = 'white', bg = self.bg_color,font = city_font)
+        city_lbl = Label(self.weatherframe, text = "  "+self.city , fg = 'white', 
+                         bg = self.bg_color,font = city_font)
         city_lbl.grid(column = 0 , row = 0, columnspan=3)
 
-        temp_lbl = Label(self.weatherframe, text = str(tempF) + " °F", fg = 'white', bg = self.bg_color,font = temp_font, justify= LEFT)
+        temp_lbl = Label(self.weatherframe, text = " " + str(tempF) + " °F", fg = 'white', 
+                         bg = self.bg_color,font = temp_font, justify= LEFT)
         temp_lbl.grid(column = 1 , row = 1, columnspan= 2)
 
-        condition_lbl = Label(self.weatherframe, text = self.condition  , fg = 'white', bg = self.bg_color,font = condition_font, justify = LEFT)
+        condition_lbl = Label(self.weatherframe, text = " " +self.condition  , fg = 'white', 
+                              bg = self.bg_color,font = condition_font, justify = LEFT)
         condition_lbl.grid(column = 1 , row = 2)
 
-        temp_max_lbl = Label(self.weatherframe, text = "H: " + str(temp_max_F) + " °F\n" + "L: " + str(temp_min_F) + " °F" , fg = 'white', bg = self.bg_color,font = temp_max_font)
+        temp_max_lbl = Label(self.weatherframe, text = "H: " + str(temp_max_F) + " °F\n" + "L: " + 
+                             str(temp_min_F) + " °F" , fg = 'white', bg = self.bg_color,font = temp_max_font)
         temp_max_lbl.grid(column = 0 , row = 2)
 
     def display_weather_forecast(self,f_response):
@@ -248,6 +252,14 @@ class Weather(LabelFrame):
         self.weatherframe.place(x=self.x_coordinate, y=self.y_coordinate)
 
 #Events
+def get_Events(user_id):
+        cursor.execute("""SELECT topic, location, event_date, start_time, 
+                       end_time FROM base_event WHERE user_id = %s ORDER BY event_date ASC,
+                       start_time ASC;""", (user_id,))
+    
+        events = cursor.fetchall()
+        return events
+
 class Events(LabelFrame):
 
     def __init__(self,user_id):
@@ -274,17 +286,9 @@ class Events(LabelFrame):
         self.column = 0
         self.event_count = 0
         self.get_tasks_from_database()
-
-    def get_Events(self,user_id):
-        cursor.execute("""SELECT topic, location, event_date, start_time, 
-                       end_time FROM base_event WHERE user_id = %s ORDER BY event_date ASC,
-                       start_time ASC;""", (user_id,))
-    
-        events = cursor.fetchall()
-        return events
     
     def get_tasks_from_database(self):
-        events = self.get_Events(self.USER_ID)
+        events = get_Events(self.USER_ID)
         current_date = dt.date.today()
 
         def is_within_next_4_days(event_date, current_date):
@@ -348,19 +352,20 @@ class Events(LabelFrame):
         self.eventframe.place(x=self.x_coordinate, y=self.y_coordinate)
 
 #News
-class News(LabelFrame):
-    def get_news(self,user_id):
+def get_news(user_id):
         cursor.execute(
          """SELECT source, topic FROM base_news where user_id = %s""", (user_id,)
         )
         news = cursor.fetchone()
         return news
+
+class News(LabelFrame):
     
     def __init__(self,user_id,*args,**kwargs):
         self.USER_ID = user_id
         #This superclass is a constructor for the News Frame
         super().__init__(*args, **kwargs)
-        source = self.get_news(self.USER_ID)[0]
+        source = get_news(self.USER_ID)[0]
         #api_key = "0dcc3ef4f630463699f2f87b79983d75"
         self.api_key = '651d6cfbee234d5abf3802bdba9eba82'
         self.newsapi = NewsApiClient(self.api_key)
@@ -446,13 +451,25 @@ class News(LabelFrame):
         self.x_coordinate = new_x
         self.y_coordinate = new_y
         self.Newsframe.place(x=self.x_coordinate, y=self.y_coordinate)
-    
+
+class Current_User():
+
+    def __init__(self,info):
+        self.userid = info[0]
+        self.username = info[1]
+        self.x_coordinate = 10
+        self.y_coordinate = 0
+        self.user_info = Label(root, text = self.userid + f"\n{self.username}" ,
+                               font=('Open Sans', 15), bg='black', fg='white', justify=LEFT)
+        self.user_info.place(x=self.x_coordinate, y=self.y_coordinate)
+
 #Photo Gallery
 if __name__ == '__main__':
     Time()
     News(15)
     Events(15)
     Weather(15)
+    Current_User(choose_user())
 
     root.mainloop()
 
