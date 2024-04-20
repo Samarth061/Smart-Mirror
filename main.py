@@ -23,7 +23,7 @@ root.iconbitmap("C:/Users/samar/Downloads/IMG_0249.ico")
 
 #Quit Button
 my_button = Button(root, text="Quit" , command = root.destroy)
-my_button.place(x=620, y=10)
+#my_button.place(x=620, y=10)
 
 #Database
 while True:
@@ -465,12 +465,7 @@ class Current_User():
 
 #Photo Gallery
 if __name__ == '__main__':
-    Time()
-    News(15)
-    Events(15)
-    Weather(15)
-    Current_User(choose_user())
-
+    
     root.mainloop()
 
 
