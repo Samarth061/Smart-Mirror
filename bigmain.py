@@ -467,7 +467,7 @@ class News(LabelFrame):
                          fg='white', wraplength=800)
             self.F1.grid(row=starting_row, column=0, sticky="w")    
             starting_row+=1
-            self.after(20000,self.F1.destroy)
+            self.after(15000,self.F1.destroy)
         self.after(20000, self.show_next_news)
     
     #This function fetches new batch of news
