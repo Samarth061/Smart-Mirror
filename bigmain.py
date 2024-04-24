@@ -64,7 +64,7 @@ def get_display(user_id):
 class Time():
     def __init__(self):
         self.x_coordinate = 1600 #Label x position
-        self.y_coordinate = 58   #Label y position
+        self.y_coordinate = 20   #Label y position
         
         self.alignment = RIGHT
         #Time Label
@@ -85,27 +85,19 @@ class Time():
         self.day_date.config(text=day_date)
         self.time.after(1000, self.time_display)
 
-    def change_coordinates(self, new_x, new_y):
+    def change_coordinates(self, new_x, new_y, alignment):
         # Method to change coordinates
         self.x_coordinate = new_x
         self.y_coordinate = new_y
         self.time.place(x=self.x_coordinate, y=self.y_coordinate)
-        if self.alignment == RIGHT:
-            self.day_date.place(x=self.x_coordinate+120, y=self.y_coordinate+65)
-        else:
-            self.day_date.place_configure(x=self.x_coordinate, y=self.y_coordinate+65)
-    
-
-    def change_alignment(self, alignment):
-        #Method to change alignment
         if alignment == 'right':
             self.alignment = RIGHT
             self.day_date.config(justify = self.alignment)
-            self.day_date.place_configure(x=self.x_coordinate+120, y=self.y_coordinate+65)
+            self.day_date.place(x=self.x_coordinate+120, y=self.y_coordinate+65)
         elif alignment == 'left':
             self.alignment = LEFT
             self.day_date.config(justify = self.alignment)
-            self.day_date.place_configure(x=self.x_coordinate, y=self.y_coordinate+65)
+            self.day_date.place(x=self.x_coordinate, y=self.y_coordinate+65)
 
 #Weather
 def get_location(user_id):
@@ -147,7 +139,7 @@ class Weather(LabelFrame):
         #self.bg_image = ImageTk.PhotoImage(Image.open("25501.jpg").resize((800,500)))
         self.bg_color = 'black' #'#4D99E7'
         self.x_coordinate = 10
-        self.y_coordinate = 40
+        self.y_coordinate = 20
         #Weather Frame that holds all the individual widgets
         self.USER_ID = user_id
         self.weatherframe = LabelFrame(root,padx = 10, pady = 10, bg = 'black', borderwidth=0,width=10,height=10)
@@ -421,7 +413,7 @@ class News(LabelFrame):
         self.F1 = Label()
 
         self.x_coordinate = 1100
-        self.y_coordinate = 840
+        self.y_coordinate = 820
         self.Newsframe = LabelFrame(root, padx = 10, pady = 10, bg = 'black', width= 200,height=100,borderwidth=0)
         self.Newsframe.place(x=self.x_coordinate, y=self.y_coordinate)
 
@@ -512,10 +504,10 @@ class Current_User():
 
 
 
-#time - 1600,58
-#Weather - 50,40
+#time - 1600,20
+#Weather - 10,20
 #Events - 60,300
-#News - 1100,740
+#News - 1100,820
 #current user - 10,0
 
 if __name__ == '__main__':

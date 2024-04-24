@@ -7,41 +7,42 @@ prev_location = get_location(15)
 prev_Events = get_Events(15)
 prev_news = get_news(15) 
 
-def default(user):   
-    Time()
+def default(user):
+    #time - 1600,20 #Weather - 10,20 #Events - 60,300 #News - 1100,820 #current user - 10,0   
+    Time() 
     News(user)
     Events(user)
-    Weather(user) 
+    Weather(user)       
     
 def display_2(user):
-    Time().change_coordinates(60,40)
-    News(user).change_coordinates(60,840)
-    Events(user).change_coordinates(50,300)
-    Weather(user).change_coordinates(1000,40)    
+    Time().change_coordinates(20,20, 'left')
+    News(user).change_coordinates(10,840)
+    Events(user).change_coordinates(10,250)
+    Weather(user).change_coordinates(1050,20)    
     
 def display_3(user):
-    Time()
-    News(user)
+    Time().change_coordinates(1600,900,"right")
+    News(user).change_coordinates(10,840)
     Events(user)
     Weather(user)
     
 def display_4(user):
-    Time()
-    News(user).change_coordinates(60,800)
-    Events(user)
+    Time().change_coordinates(1600,900,"right")
+    News(user).change_coordinates(10,840)
+    Events(user).change_coordinates(1620,300)
     Weather(user)
     
 def display_5(user):
-    Time()
-    News(user)
-    Events(user)
-    Weather(user)
+    Time().change_coordinates(20,20, 'left')
+    News(user).change_coordinates(10,840)
+    Events(user).change_coordinates(10,250)
+    Weather(user).change_coordinates(1050,840)
     
 def display_6(user):
     Time()
-    News(user)
-    Events(user)
-    Weather(user)
+    News(user).change_coordinates(10,840)
+    Events(user).change_coordinates(1620,300)
+    Weather(user).change_coordinates(10,20)
 
 def update_gui():
     global prev_userid,prev_display,prev_location,prev_Events,prev_news
