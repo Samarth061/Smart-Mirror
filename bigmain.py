@@ -15,10 +15,11 @@ width = root.winfo_screenwidth()
 height = root.winfo_screenheight()
 
 #root.geometry("%dx%d" % (width,height))w
-root.state('zoomed')
+#root.state('zoomed')
 root.title("Smart Mirror")
 root.overrideredirect(True)
 root.configure(background='black')#2E2E2E
+root.geometry(f"{width}x{height}")
 
 #Quit Button
 my_button = Button(root, text="Quit" , command = root.destroy)
@@ -64,20 +65,22 @@ class Time():
     def __init__(self):
         self.x_coordinate = 1600 #Label x position
         self.y_coordinate = 58   #Label y position
+        
         self.alignment = RIGHT
         #Time Label
         self.time = Label(root, font=('Roboto', 40, 'bold'), bg='black', fg='white')
         self.time.place(x=self.x_coordinate, y=self.y_coordinate)
         #Day Date Label
-        self.day_date = Label(root, font=('Open Sans', 20), bg='black', fg='white', justify = self.alignment)
-        self.day_date.place(x=self.x_coordinate+85, y=self.y_coordinate+65) 
+        self.day_date = Label(root, font=('Open Sans', 20), bg='black', fg='white', 
+                              justify = self.alignment)
+        self.day_date.place(x=self.x_coordinate+120, y=self.y_coordinate+65) 
         self.time_display()
 
     #Shows current date and time
     def time_display(self):
         self.current_date = datetime.now()
         time_now = strftime('%I:%M %p\n')
-        day_date = strftime('%a\n' + '%Y-%m-%d')
+        day_date = strftime('%A\n' + '%Y-%m-%d')
         self.time.config(text=time_now)
         self.day_date.config(text=day_date)
         self.time.after(1000, self.time_display)
@@ -87,7 +90,22 @@ class Time():
         self.x_coordinate = new_x
         self.y_coordinate = new_y
         self.time.place(x=self.x_coordinate, y=self.y_coordinate)
-        self.day_date.place(x=self.x_coordinate+85, y=self.y_coordinate+65)
+        if self.alignment == RIGHT:
+            self.day_date.place(x=self.x_coordinate+120, y=self.y_coordinate+65)
+        else:
+            self.day_date.place_configure(x=self.x_coordinate, y=self.y_coordinate+65)
+    
+
+    def change_alignment(self, alignment):
+        #Method to change alignment
+        if alignment == 'right':
+            self.alignment = RIGHT
+            self.day_date.config(justify = self.alignment)
+            self.day_date.place_configure(x=self.x_coordinate+120, y=self.y_coordinate+65)
+        elif alignment == 'left':
+            self.alignment = LEFT
+            self.day_date.config(justify = self.alignment)
+            self.day_date.place_configure(x=self.x_coordinate, y=self.y_coordinate+65)
 
 #Weather
 def get_location(user_id):
@@ -128,7 +146,7 @@ class Weather(LabelFrame):
         super().__init__()
         #self.bg_image = ImageTk.PhotoImage(Image.open("25501.jpg").resize((800,500)))
         self.bg_color = 'black' #'#4D99E7'
-        self.x_coordinate = 50
+        self.x_coordinate = 10
         self.y_coordinate = 40
         #Weather Frame that holds all the individual widgets
         self.USER_ID = user_id
@@ -288,19 +306,21 @@ class Events(LabelFrame):
     def __init__(self,user_id):
         self.USER_ID = user_id
         super().__init__()
-        self.day_font = ("Roboto", 15)
-        self.date_font = ("Roboto", 18)
-        self.month_font = ("Helvetica", 12)
-        self.event_time_font = ("Helvetica", 12)
-        self.event_details_font = ("Helvetica", 18)
-        self.event_address_font = ("Helvetica", 12)
+        self.day_font = ("Roboto", 18)
+        self.date_font = ("Roboto", 21)
+        self.month_font = ("Helvetica", 15)
+        self.event_time_font = ("Helvetica", 15)
+        self.event_details_font = ("Helvetica", 21)
+        self.event_address_font = ("Helvetica", 15)
 
-        self.x_coordinate = 60
+        self.x_coordinate = 10
         self.y_coordinate = 300
-        self.eventframe = LabelFrame(root, padx = 10,pady = 10, bg = 'black', fg = 'white', border=0, width =200, height = 400)
+        self.eventframe = LabelFrame(root, padx = 10,pady = 10, bg = 'black', 
+                                     fg = 'white', border=0, width =200, height = 400)
         self.eventframe.place(x=self.x_coordinate,y=self.y_coordinate)
 
-        self.titlelabel = Label(self.eventframe, text = "Today's Events", bg = 'black', fg = 'white', font = self.event_details_font)
+        self.titlelabel = Label(self.eventframe, text = "Today's Events", 
+                                bg = 'black', fg = 'white', font = self.event_details_font)
         #self.titlelabel.grid(row = 0, column = 0)
         self.row = 1
         self.column = 0
@@ -451,12 +471,12 @@ class News(LabelFrame):
             source_name = article['source']['name']
             news = source_name + ": " + description
             #self here might be an error check it first
-            self.F1 = Label(self.Newsframe, text= news, font=("helvetica", 12, "bold"), bg='black',
+            self.F1 = Label(self.Newsframe, text= news, font=("helvetica", 15, "bold"), bg='black',
                          fg='white', wraplength=800)
             self.F1.grid(row=starting_row, column=0, sticky="w")    
             starting_row+=1
-            self.after(5000,self.F1.destroy)
-        self.after(5000, self.show_next_news)
+            self.after(20000,self.F1.destroy)
+        self.after(20000, self.show_next_news)
     
     #This function fetches new batch of news
     def show_next_news(self):
@@ -479,8 +499,9 @@ class Current_User():
         self.username = info[1]
         self.x_coordinate = 10
         self.y_coordinate = 0
-        self.user_info = Label(root, text = self.userid + f"\n{self.username}" ,
-                               font=('Open Sans', 15), bg='black', fg='white', justify=LEFT)
+        self.user_info = Label(root, text =  f"{self.username}" ,
+                               font=('Open Sans', 10), bg='black', fg='white', 
+                               justify=LEFT)
         self.user_info.place(x=self.x_coordinate, y=self.y_coordinate)
     
     def change_coordinates(self, new_x, new_y):
@@ -499,10 +520,10 @@ class Current_User():
 
 if __name__ == '__main__':
     Time().change_coordinates(60,40)
-    News(15).change_coordinates(60,740)
-    Events(15).change_coordinates(60,200)
-    Weather(15).change_coordinates(1000,50)
-    Current_User(choose_user()).change_coordinates(1840,0)
+    News(21).change_coordinates(60,840)
+    Events(21).change_coordinates(50,300)
+    Weather(21).change_coordinates(1000,40)
+    Current_User(choose_user()).change_coordinates(1800,0)
 
     root.mainloop()
 

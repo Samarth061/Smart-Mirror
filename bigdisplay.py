@@ -1,12 +1,13 @@
-from bigmain import Time,News,Events,Weather,Current_User,root,choose_user,get_display,get_location,get_Events,get_news
+from bigmain import Time,News,Events,Weather,Current_User
+from bigmain import root,choose_user,get_display,get_location,get_Events,get_news
 
 prev_userid = 0
 prev_display = 0
 prev_location = get_location(15)
 prev_Events = get_Events(15)
-prev_news = get_news(15)
+prev_news = get_news(15) 
 
-def default(user):
+def default(user):   
     Time()
     News(user)
     Events(user)
@@ -14,12 +15,12 @@ def default(user):
     
 def display_2(user):
     Time().change_coordinates(60,40)
-    News(user).change_coordinates(60,740)
-    Events(user).change_coordinates(60,200)
-    Weather(user).change_coordinates(1000,50)
+    News(user).change_coordinates(60,840)
+    Events(user).change_coordinates(50,300)
+    Weather(user).change_coordinates(1000,40)    
     
 def display_3(user):
-    Time().change_coordinates()
+    Time()
     News(user)
     Events(user)
     Weather(user)
@@ -67,7 +68,7 @@ def update_gui():
 
         if(curr_display == "Display 2"):
             display_2(curr_userid)
-            Current_User(choose_user()).change_coordinates(1840,0)
+            Current_User(choose_user()).change_coordinates(1800,0)
 
         elif(curr_display == "Display 3"):
             display_3(curr_userid)
