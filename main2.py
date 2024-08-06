@@ -31,9 +31,9 @@ while True:
             conn = psycopg2.connect(
                 dbname="railway",
                 user="postgres",
-                password="b*14GGE23cbcegDcAEDa3d*cd6AC-5*-",
-                host="viaduct.proxy.rlwy.net",
-                port="15394",
+                password="",
+                host="",
+                port="",
             )
             cursor = conn.cursor()
             print("Database connection was successfull!")
@@ -137,7 +137,7 @@ class Weather(LabelFrame):
 
         #Weather API
         self.base_url ="https://api.openweathermap.org/data/2.5/weather?"
-        self.api_key = "38fc658cdcc4cc6139caf2649ccc7bbb"
+        self.api_key = ""
         self.city = get_location(self.USER_ID)
         self.complete_url = self.base_url+"appid="+self.api_key+"&q="+self.city
         self.response = requests.get(self.complete_url).json()
@@ -152,7 +152,7 @@ class Weather(LabelFrame):
 
         #Forecast API
         self.exclude = "minute,hourly"
-        self.api_key = "38fc658cdcc4cc6139caf2649ccc7bbb"
+        self.api_key = ""
         self.forecast_url =  f"http://api.openweathermap.org/data/2.5/forecast?q={self.city}&appid={self.api_key}&units=imperial"
         self.f_response = requests.get(self.forecast_url).json()
 
@@ -362,8 +362,8 @@ class News(LabelFrame):
         #This superclass is a constructor for the News Frame
         super().__init__(*args, **kwargs)
         source = get_news(self.USER_ID)[0]
-        #api_key = "0dcc3ef4f630463699f2f87b79983d75"
-        self.api_key = '651d6cfbee234d5abf3802bdba9eba82'
+        
+        self.api_key = ''
         self.newsapi = NewsApiClient(self.api_key)
         self.params = {
             'q': '',
